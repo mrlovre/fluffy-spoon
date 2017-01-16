@@ -1,0 +1,7 @@
+ - cilj: izvlačenje korisne informacije iz snimke glazbe
+ - adsr model
+ - eliminacija alikvotnih tonova
+ - tonalitet
+ - akord
+ - ???
+ - algoritam

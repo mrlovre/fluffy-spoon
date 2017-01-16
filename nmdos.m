@@ -9,6 +9,53 @@ t3 = 0 : ts : 4 - ts;
 figure, plot(t3, chop3)
 
 %%
+[polka, fs] = audioread('polka.wav');
+ts = 1 / fs;
+t = 0 : ts : 10 - ts;
+polka = polka(1 : 10 * fs, 1);
+figure, plot(t, polka);
+
+%%
+scales =  2 .^ (-13 - 3 / 12 : 1 / 12 : -6);
+wtft = cwtft(struct('val', polka, 'period', 1 / 44100), 'wavelet', {'bump', [3.4375, 0.1]}, 'scales', scales);
+
+wt = abs(wtft.cfs(:, 1 : 10 : end));
+diff_wt = diff(wt.').';
+[~, m] = size(diff_wt);
+for i = 1 : m
+    temp = diff_wt(:, i);    
+%     temp(temp < 0) = 0;
+%     temp = temp / max(temp);
+%     temp = softmax(temp);
+%     temp(temp < 2 / 88) = 0;
+    diff_wt(:, i) = temp;
+end
+
+% A = zeros(12, m + 1);
+% for i = 1 : 88
+%     j = mod(i - 1, 12) + 1;
+%     A(j, :) = A(j, :) + wt(i, :);
+% end
+
+figure, imagesc(wt(:, 580 : 1300)), colormap jet
+
+figure, hold on
+for i = 19 : 31
+    plot(diff_wt(i, 580:3500))
+end
+legend(tones(88 + 1 - (19 : 31)))
+ 
+% figure, imagesc(wt(:, 600 : 3000)), colormap jet
+
+%%
+interval = mean(diff_wt(:, 1 : 3500).');
+% interval = diff_wt(:, 4000);
+% interval(interval < 0.5) = 0;
+figure, bar(interval), ylim([min(interval(:)), max(interval(:))])
+[~, inds] = sort(interval, 'descend');
+tones(inds(1 : sum(interval > 0)))
+
+%%
 [mila, fs] = audioread('mila.wav');
 ts = 1 / fs;
 mila1 = mila(20 * fs + 1 : 24 * fs, 1);
@@ -72,7 +119,7 @@ figure, imagesc(wt), colormap jet
 f = wtft.frequencies;
 
 figure, imagesc(wt), colormap jet
-figure, bar(fliplr(wt(:, 4000))), xticks(1 : 88), xticklabels(tones(1 : 88))
+figure, bar(fliplr(wt(:, 4000)))
 
 figure, bar(sum(wt.'));
 

@@ -1,0 +1,167 @@
+\documentclass[a4paper, 11pt, twocolumn]{article}
+\usepackage[left=2cm, right=2cm, top=2cm, bottom=3cm]{geometry}
+\setlength{\columnsep}{0.6cm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+\microtypecontext{spacing=nonfrench}
+\usepackage{indentfirst}
+\usepackage{notoccite}
+\usepackage{listings}
+
+\usepackage[croatian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Učitaj pakete za kodnu stranicu 1250 i hrvatski jezik.
+%\RequirePackage{graphicx} % Uključeno jer je često korišteno
+%\RequirePackage{amssymb} % Uključeno jer je često korišteno
+%\RequirePackage{mathtools} % Uključeno jer je često korišteno
+%\RequirePackage{caption}
+%\RequirePackage{ifthen}
+%\RequirePackage{url} % Potrebno radi natbiba
+%\RequirePackage{enumitem} % Potrebno radi izmjene itemize okoline
+
+% Ostali korisni paketi.
+%\RequirePackage{graphicx}
+%\RequirePackage{hyperref}
+\RequirePackage{amssymb}
+\RequirePackage{amsmath}
+
+% Ovdje započinje članak.
+\begin{document}
+
+% Navedite naslov i autore. Datume se automatski postavlja na datum kreiranja dokumenta,
+\date{15. siječnja 2017.}
+\title{Harmonijska analiza glazbe korištenjem valićne transformacije} 
+\author{Lovre Mrčela}
+\maketitle
+
+% Svako poglavlje započinje sa \section{Ime poglavlja} ako želimo da bude numerirano,
+% a sa \section*{Ime poglavlja} ako ne želimo da bude numerirano.
+
+\abstract{
+U ovom radu provedena je harmonijska analiza glazbe upotrebom računala.
+Harmonija u glazbi u najširem smislu podrazumijeva istovremeno zvučanje više tonova, te odnos među njima.
+Pri analizi zvučnog signala korištena je valićna transformacija.
+
+Svrha rada je automatizirana računalna obrada malog glazbenog isječka, te izvlačenje neke korisne informacije: tonaliteta, akorda ili pojedinih tonove melodije.
+}
+
+\section{Uvod}
+Budući da je tema ovog rada glazba, u nastavku su objašnjeni neki osnovni glazbeni pojmovi koji su proučavani.
+Također, pojašnjena je uloga valićne transformacije, te koji su problemi pri izvlačenju glazbenih tonova iz dobivene transformacije.
+
+\subsection{Glazbeni pojmovi}
+Pojednostavljeno govoreći, može se reći da je glazba niz tonova u vremenu proizvedenih na glazbenom instrumentu (uključujući i ljudski glas), gdje svaki ton ima svoju \textit{visinu}, \textit{trajanje}, \textit{glasnoću}, i \textit{boju}.
+Jedan instrument, može proizvesti tonove različite visine, trajanja i glasnoće, dok svojstvo boje tona omogućuje razlikovanje instrumenata.
+U užem smislu, pojam glazbenog tona se poistovjećuje sa njegovom visinom (npr. ton $c$).
+
+Što se tiče sadržaja, glazba se može sastojati od istaknutih tonova koji čine melodiju, i pasivnih tonova koji čine pratnju toj melodiji; u tom slučaju radi se o \textit{homofonoj} glazbi.
+Suprotno tome, glazba se može sastojati od više samostalnih melodija, i tada se radi o \textit{polifonoj} glazbi.
+
+\textit{Harmonijska analiza} proučava vertikalnu strukturu glazbe: koji tonovi se čuju u određenom vremenskom trenutku, te koji je njihov međusoban odnos.
+Za razliku od harmonijske, \textit{melodijska analiza} proučava horizontalnu strukturu glazbe: koji slijed tonova u vremenu čini melodiju, te koji je odnos između njih.
+Dodatno, \textit{polifonijska analiza} je kombinacija dviju navedenih, te ona proučava kretanje više melodija istovremeno, i njihov odnos.
+Ovaj rad bavi se harmonijskom, te u manjoj mjeri, melodijskom analizom.
+
+Na koncu, valja napomenuti da pojam \textit{akord} označava istovremeno zvučanje dvaju ili više tonova, te pojam tonalitet u najširem smislu podrazumijeva tonove od kojih je glazbeni isječak sastavljen.
+
+\subsection{Uloga transformacije}
+Format u kojem je glazba snimljena na računalu nije pogodan za detaljnu harmonijsku analizu, budući da se radi o ``spljoštenom'' jednodimenzionalnom signalu u vremenu.
+Cilj valićne transformacije je ``izvući'' amplitudu signala na pojedinim frekvencijama, kako bi se iz nje mogli rekonstruirati snimljeni tonovi.
+
+Amplitudno-frekvencijski sastav glazbenog tona u vremenu je složen.
+Jedan glazbeni ton nije sastavljen od samo jedne frekvencije, niti jedna frekvencija u određenom vremenskom trenutku pripada nužno jednom tonu.
+Naime, svojstvo boje tona glazbenog instrumenta uvjetuje pojavu dodatnih frekvencija, tzv. \textit{alikvota}, uz temeljnu frekvenciju koja je određena visinom tona.
+Gledajući valićnu transformaciju, teško je odrediti koje frekvencije su temeljne, a koje određuju boju tona.
+Ovaj problem detaljnije je opisan u potpoglavlju \ref{ss:alikvoti}.
+Dodatno, u vremenskoj dimenziji jedan ton ravna se prema ADSR ovojnici, što otežava izdvajanje tona u vremenu.
+Ovaj problem detaljnije je opisan u potpoglavlju \ref{ss:adsr}.
+
+\section{Valićna analiza}
+U ovom radu koristi se tzv. `bump' valić iz \textsc{Matlab}-ovog \textit{wavelet} paketa, čija Fourierova transformacija ima oblik:
+
+$$ \Psi\left( a \omega \right) = \exp\left( 1 - \dfrac{1}{1 - \dfrac{\left(a \omega - \mu \right)^2}{\sigma^2}} \right)_{\left[ \frac{\mu - \sigma}{a}, \frac{\mu + \sigma}{a} \right]}, $$
+gdje notacija $(\cdot)_{[a, b]}$ označava da je signal aktivan na području $[a, b]$, a van njega je jednak nuli.
+Parametar $\mu$ određuje centar frekvencije valića i njegov dopušteni raspon je $[3, 6]$.
+Parametar $\sigma$ određuje kompromis između vremenske i frekvencijske razlučivosti, i njegov dopušteni raspon je $[0.1, 1.2]$.
+
+Parametar $\mu$ odabran je tako da pomnožen nekom potencijom broja 2 daje vrijednost 440\ Hz, prema kojoj se danas ugađaju instrumenti, a da je unutar dopuštenog raspona. Ta vrijednost je 3.4375.
+Budući da je za primjenu ovog rada važnija veća preciznost u frekvencijama, parametar $\sigma$ postavljen je na minimalnu vrijednost, 0.1.
+
+\section{Problemi u analizi}
+U ovom dijelu opisani su prethodno navedeni problemi s \textit{alikvotima} i ADSR ovojnicom, te su navedeni načini kojima se njihov utjecaj može smanjiti prilikom određivanja glazbenih tonova iz transformacije.
+
+\subsection{\textit{Alikvoti}}
+\label{ss:alikvoti}
+\textit{Alikvot} je pripadna frekvencija nekog glazbenog tona koja čini boju tona.
+Kada u tonu ne bi bili sadržani \textit{alikvoti}, onda bi svi instrumenti imali jednaku boju tona.
+Međutim, kod određivanja tona iz transformacije signala ovo zapravo stvara ``lažne frekvencije'' koje ne odgovaraju visinama stvarno odsviranih tonova.
+Da stvar bude još gora, neke od tih frekvencija mogu se preklapati sa visinama drugih tonova, te tako uzrokuju dodatno pojačanje osnovniih frekvencija.
+
+\begin{figure}[htb]
+  \includegraphics[width=\linewidth]{alikvoti}
+  \caption{Rezultat transformacije glazbenog isječka koji ima odsviran samo jedan ton. Na x-osi prikazano je vrijeme, a na y-osi skala. Temeljna frekvencija prikazana je crvenom bojom, dok su frekvencije alikvota udaljene za 1 oktavu, $\log_2{3}=1.585$ oktava, $\log_2{4}=2$ oktave, itd.}
+  \label{fig:alikvoti}
+\end{figure}
+
+Frekvencija $n$-tog alikvota $f_n$ je višekratnik temeljne frekvencije tona $f_0$, odnosno $f_n = n \cdot f_0$.
+Ovisno o načinu dobivanja tona u nekom instrumentu, alikvot može nastati zbog rezoniranja kutije instrumenta, žica, stupca zraka, i sl.
+Međutim, valja primijetiti da nema ``lažnih frekvencija'' ispod temeljne, te nam to svojstvo može pomoći pri određivanju temeljne frekvencije.
+
+\subsection{ADSR ovojnica}
+\label{ss:adsr}
+ADSR (engl. \textit{Attack-Decay-Sustain-Release}) ovojnica je model generiranja glazbenog tona na \textit{synthesizerima} koja oponaša glazbeni instrument u stvarnom svijetu.
+Četiri faze su: udar (engl. \textit{attack}), spust (engl. \textit{decay}), zadržavanje (engl. \textit{sustain}), i prigušivanje (engl. \textit{release}).
+Ove četiri faze prikazane su na slici \ref{fig:adsr}.
+
+\begin{figure}[htb]
+  \includegraphics[width=\linewidth]{Adsr3}
+  \caption{Shematski prikaz ADSR ovojnice, s naznačene četiri faze.}
+  \label{fig:adsr}
+\end{figure}
+
+U fazi udara, ton naglo postiže maksimum glasnoće, što se čuje kao udar;
+zatim se u fazi spusta glasnoća smanjuje do određene vrijednosti.
+Ovo se događa kada instrument proizvede ton, npr. na pritisak tipke klavira, ili trzaj žice na gitari.
+Nadalje ton traje u fazi zadržavanja i stalne je glasnoće, a ovo odgovara držanju tipke na klaviru, ili prelaženja gudala preko žice uz konstantan pritisak i brzinu.
+Na kraju u fazi prigušivanja, glasnoća opada i ton se više ne čuje, što odgovara otpuštanju tipke na klaviru, ili prigušenju žice na gitari prstima.
+
+Odraz ovog efekta na izgled transformacije vidljiv je na slici \ref{fig:adsr_anomalija}.
+Prilikom određivanja tonaliteta ili akorda glazbenog isječka, problem je u predugom trajanju signala u transformaciji, jer preklapanje pojedinih tonova u vremenu može navesti na krivi zaključak.
+
+\begin{figure}[htb]
+  \includegraphics[width=\linewidth]{adsr_anomalija}
+  \caption{Prikaz transformacija za 12 uzastopnih skala (jednu oktavu) na glazbenom isječku koji sadrži četiri uzastopno odsvirana tona ($f\sharp, h, d, f\sharp$). Svaki ton prikazan je različitom bojom. Za svaki ton vidljiv je oblik ADSR ovojnice. Uočljiva je i pojava alikvotne frekvencije u prvom odsviranom tonu: to je ujedno i osnovna frekvencija četvrtog odsviranog tona.}
+  \label{fig:adsr_anomalija}
+\end{figure}
+
+Predloženo rješenje ovog problema je promatranje derivacije transformacije po vremenskoj komponenti.
+Maksimum derivacije pokazuje gdje glasnoća tona najbrže raste, a to je upravo u prvoj fazi ADSR ovojnice.
+Derivirani signal prikazan je na slici \ref{fig:adsr_der}.
+
+\begin{figure}[htb]
+  \includegraphics[width=\linewidth]{adsr_der}
+  \caption{Derivacija prethodno prikazane transformacije po vremenu. Udari tonova sad su kompaktno smješteni.}
+  \label{fig:adsr_der}
+\end{figure}
+
+\section{Ekstrakcija informacije}
+
+\subsection{Tonalitet}
+
+\subsection{Akord}
+
+\subsection{Melodija}
+
+\section{Zaključak}
+
+\begin{thebibliography}{25}
+\bibitem{franci}
+F.~Iannacci, Y.~Huang.
+ChirpCast: Data Transmission via Audio.
+June 5, 2010.
+
+\end{thebibliography} 
+\end{document} 
