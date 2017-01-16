@@ -48,9 +48,9 @@ legend(tones(88 + 1 - (19 : 31)))
 % figure, imagesc(wt(:, 600 : 3000)), colormap jet
 
 %%
-interval = mean(diff_wt(:, 1 : 3500).');
+interval = mean(wt(:, 1 : 3500).').';
 % interval = diff_wt(:, 4000);
-% interval(interval < 0.5) = 0;
+interval(interval < mean(interval)) = 0;
 figure, bar(interval), ylim([min(interval(:)), max(interval(:))])
 [~, inds] = sort(interval, 'descend');
 tones(inds(1 : sum(interval > 0)))
