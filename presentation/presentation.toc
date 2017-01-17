@@ -1,0 +1,13 @@
+\beamer@endinputifotherversion {3.36pt}
+\select@language {croatian}
+\beamer@sectionintoc {1}{Uvod}{2}{0}{1}
+\beamer@subsectionintoc {1}{1}{Glazbeni pojmovi}{3}{0}{1}
+\beamer@subsectionintoc {1}{2}{Cilj}{9}{0}{1}
+\beamer@sectionintoc {2}{Vali\IeC {\'c}na analiza}{11}{0}{2}
+\beamer@sectionintoc {3}{Problemi u rekonstrukciji odsviranih tonova}{13}{0}{3}
+\beamer@subsectionintoc {3}{1}{\textit {Alikvoti}}{15}{0}{3}
+\beamer@subsectionintoc {3}{2}{ADSR ovojnica}{18}{0}{3}
+\beamer@sectionintoc {4}{Ekstrakcija informacija}{21}{0}{4}
+\beamer@subsectionintoc {4}{1}{Tonalitet}{23}{0}{4}
+\beamer@subsectionintoc {4}{2}{Akord}{24}{0}{4}
+\beamer@subsectionintoc {4}{3}{Melodija}{25}{0}{4}
